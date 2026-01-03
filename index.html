@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Accelerator Physics Lectures (in correct order)</title>
+<title>Accelerator Physics Lectures (Correct Order)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
@@ -13,10 +13,20 @@
     color: #222;
   }
 
+  body.dark {
+    background: #121212;
+    color: #e0e0e0;
+  }
+
   header {
     padding: 1rem;
     background: #ffffff;
     border-bottom: 1px solid #ccc;
+  }
+
+  body.dark header {
+    background: #1e1e1e;
+    border-color: #333;
   }
 
   h1 {
@@ -33,11 +43,10 @@
     padding: 1rem;
   }
 
-  iframe {
+  #player {
     width: 100%;
     height: 480px;
     border-radius: 8px;
-    border: none;
     background: black;
   }
 
@@ -45,6 +54,7 @@
     margin-top: 0.5rem;
     display: flex;
     gap: 0.5rem;
+    flex-wrap: wrap;
   }
 
   button {
@@ -61,6 +71,10 @@
     max-height: 560px;
   }
 
+  body.dark .playlist {
+    background: #1e1e1e;
+  }
+
   .playlist div {
     padding: 0.4rem 0.6rem;
     cursor: pointer;
@@ -71,9 +85,17 @@
     background: #eee;
   }
 
+  body.dark .playlist div:hover {
+    background: #2a2a2a;
+  }
+
   .playlist .active {
     background: #dbeafe;
     font-weight: 600;
+  }
+
+  body.dark .playlist .active {
+    background: #333366;
   }
 
   footer {
@@ -83,11 +105,15 @@
     padding: 1rem;
   }
 
+  body.dark footer {
+    color: #aaa;
+  }
+
   @media (max-width: 900px) {
     main {
       grid-template-columns: 1fr;
     }
-    iframe {
+    #player {
       height: 300px;
     }
   }
@@ -97,16 +123,17 @@
 <body>
 
 <header>
-  <h1>Accelerator Physics NPTEL – IIT Bombay + HBNI </h1>
+  <h1>Accelerator Physics – NPTEL (IIT Bombay / HBNI)</h1>
 </header>
 
 <main>
   <section>
-    <iframe id="player" allowfullscreen></iframe>
+    <div id="player"></div>
 
     <div class="controls">
       <button onclick="prev()">◀ Previous</button>
       <button onclick="next()">Next ▶</button>
+      <button onclick="toggleDark()">🌙 Dark Mode</button>
     </div>
   </section>
 
@@ -118,7 +145,12 @@
   All rights belong to the original creators.
 </footer>
 
+<!-- YouTube IFrame API -->
+<script src="https://www.youtube.com/iframe_api"></script>
+
 <script>
+/* ================= LECTURE LIST ================= */
+
 const lectures = [
   { title: "Course Introduction", id: "BR2w0v6yuPw" },
 
@@ -207,21 +239,41 @@ const lectures = [
   { title: "Week 12 – Lecture 36B", id: "SND6USQ1rRc" }
 ];
 
-let current = parseInt(localStorage.getItem("currentLecture")) || 0;
+/* ================= PLAYER LOGIC ================= */
 
-const player = document.getElementById("player");
+let current = parseInt(localStorage.getItem("currentLecture")) || 0;
+let player;
 const playlistDiv = document.getElementById("playlist");
+
+function onYouTubeIframeAPIReady() {
+  player = new YT.Player("player", {
+    videoId: lectures[current].id,
+    playerVars: { rel: 0 },
+    events: {
+      onStateChange: onPlayerStateChange
+    }
+  });
+  render();
+}
+
+function onPlayerStateChange(event) {
+  if (event.data === YT.PlayerState.ENDED) {
+    next();   // AUTO-ADVANCE
+  }
+}
 
 function load(i) {
   if (i < 0 || i >= lectures.length) return;
   current = i;
-  player.src = `https://www.youtube.com/embed/${lectures[i].id}`;
+  player.loadVideoById(lectures[i].id);
   localStorage.setItem("currentLecture", current);
   render();
 }
 
 function next() { load(current + 1); }
 function prev() { load(current - 1); }
+
+/* ================= PLAYLIST UI ================= */
 
 function render() {
   playlistDiv.innerHTML = "";
@@ -234,10 +286,20 @@ function render() {
   });
 }
 
-load(current);
-</script>
+/* ================= DARK MODE ================= */
 
+function toggleDark() {
+  document.body.classList.toggle("dark");
+  localStorage.setItem(
+    "theme",
+    document.body.classList.contains("dark") ? "dark" : "light"
+  );
+}
+
+if (localStorage.getItem("theme") === "dark") {
+  document.body.classList.add("dark");
+}
+</script>
 
 </body>
 </html>
-
